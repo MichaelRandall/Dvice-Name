@@ -19,7 +19,7 @@ const secretClient = new SecretClient(keyVaultUri, credential);
 module.exports = async function (context, req) {
   const endpoint = config.endpoint;
 
-  const secretKey = await secretClient.getSecret(config.keyvaultkey);
+  const secretKey = await secretClient.getSecret("dvcnamingCosmosPKey");
   const key = secretKey.value;
   const client = new CosmosClient({ endpoint, key });
 
@@ -27,8 +27,9 @@ module.exports = async function (context, req) {
   const container = database.container(containerId);
 
   const theId = req.params.id;
+  const theType = req.query.type;
 
-  const { resource: theDevice } = await container.item(theId).read();
+  const { resource: theDevice } = await container.item(theId, theType).read();
 
   const myMessage = {
     status: "200",

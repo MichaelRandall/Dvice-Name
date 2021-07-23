@@ -1,5 +1,8 @@
 const config = require("../sharedCode/config");
 
+const databaseId = "dvc-mngmnt-db";
+const containerId = "devices";
+
 const { DefaultAzureCredential } = require("@azure/identity");
 const { SecretClient } = require("@azure/keyvault-secrets");
 const { CosmosClient } = require("@azure/cosmos");
@@ -14,13 +17,13 @@ const secretClient = new SecretClient(keyVaultUri, credential);
 module.exports = async function (context, req) {
   const endpoint = config.endpoint;
 
-  const secretKey = await secretClient.getSecret(config.keyvaultkey);
+  const secretKey = await secretClient.getSecret("dvcnamingCosmosPKey");
   const key = secretKey.value;
 
   const client = new CosmosClient({ endpoint, key });
 
-  const database = client.database(config.databaseId);
-  const container = database.container(config.devicesContainerId);
+  const database = client.database(databaseId);
+  const container = database.container(containerId);
 
   const querySpec = {
     query: "SELECT * from c",
