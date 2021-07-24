@@ -5,10 +5,8 @@ const { CosmosClient } = require("@azure/cosmos");
 const { DefaultAzureCredential } = require("@azure/identity");
 const { SecretClient } = require("@azure/keyvault-secrets");
 
-// const databaseId = "dvc-mngmnt-db";
-// const containerId = "devices";
-const databaseId = config.databaseId;
-const containerId = config.devicesContainerId;
+const databaseId = "dvc-mngmnt-db";
+const containerId = "devices";
 
 const keyVaultName = config.keyvaultname;
 const keyVaultUri = `https://${keyVaultName}.vault.azure.net`;
@@ -20,8 +18,7 @@ const secretClient = new SecretClient(keyVaultUri, credential);
 
 module.exports = async function (context, req) {
   const endpoint = config.endpoint;
-  // const secretKey = await secretClient.getSecret("dvcnamingCosmosPKey");
-  const secretKey = await secretClient.getSecret(config.keyvaultkey);
+  const secretKey = await secretClient.getSecret("dvcnamingCosmosPKey");
   const key = secretKey.value;
   const client = new CosmosClient({ endpoint, key });
 
@@ -35,19 +32,18 @@ module.exports = async function (context, req) {
   const theType = req.query.type;
   const newObject = req.body;
 
-  // retrieve the object to be updated from db using the supplied id and partition key
+  context.log("VALUES " + theId + ", " + theType)
+
   const { resource: theDevice } = await container.item(theId, theType).read();
 
-  // destructure id and type from the object to update to use when updating the object
+  // Pulling the id and partition key property
   const { id, type } = theDevice;
 
-  // assigning all the values passed in from the form and updating the original object
-  const updatedDevice = {...theDevice, ...newObject};
+  theDevice.device = newObject.device;
 
-  // update the old object by replacing it with updatedDevice object, returns updated_device
   const { resource: updated_device } = await container
     .item(id, type)
-    .replace(updatedDevice);
+    .replace(theDevice);
 
   const responseMessage = {
     status: 200,
